@@ -133,17 +133,17 @@ function setting_repos() {
 
     printf " 2. ${UL}Setting Repos${CLF}\n"
    
-    #yum install -y epel-release &
-    sleep 2 &
+    yum install -y epel-release &
+    #sleep 2 &
     load $! epel-release
 
-    #yum install -y https://centos7.iuscommunity.org/ius-release.rpm
+    yum install -y https://centos7.iuscommunity.org/ius-release.rpm &
     #sleep 3 &
-    #load $! ius
+    load $! ius
 
-    #yum update -y
+    yum update -y
     #sleep 3 &
-    #load $! yum-update
+    load $! yum-update
 
 }
 
@@ -157,12 +157,12 @@ function install_components() {
                        "php72u-mbstring" "php72u-xml"
                      )
     
-    declare -a components=( "zsh" "vim")
+    #declare -a components=( "zsh" "vim")
 
     for component in "${components[@]}"
     do
-        #yum install -y $component &
-        sleep 1 &
+        yum install -y $component &
+        #sleep 1 &
         load $! $component
     done
 }
