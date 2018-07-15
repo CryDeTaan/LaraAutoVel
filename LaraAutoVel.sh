@@ -133,15 +133,15 @@ function setting_repos() {
 
     printf " 2. ${UL}Setting Repos${CLF}\n"
    
-    yum install -y epel-release &
+    yum install -y -q epel-release &
     #sleep 2 &
     load $! epel-release
 
-    yum install -y https://centos7.iuscommunity.org/ius-release.rpm &
+    yum install -y -q https://centos7.iuscommunity.org/ius-release.rpm &
     #sleep 3 &
     load $! ius
 
-    yum update -y
+    yum update -y -q
     #sleep 3 &
     load $! yum-update
 
