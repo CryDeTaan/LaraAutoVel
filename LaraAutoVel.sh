@@ -133,15 +133,15 @@ function setting_repos() {
 
     printf " 2. ${UL}Setting Repos${CLF}\n"
    
-    yum install -y -q epel-release &
+    yum install -y -q epel-release >/dev/null 2>epel.log &
     #sleep 2 &
     load $! epel-release
 
-    yum install -y -q https://centos7.iuscommunity.org/ius-release.rpm &
+    yum install -y -q https://centos7.iuscommunity.org/ius-release.rpm  >/dev/null 2>ius.log &
     #sleep 3 &
     load $! ius
 
-    yum update -y -q
+    yum update -y -q >/dev/null 2>update.log &
     #sleep 3 &
     load $! yum-update
 
@@ -161,7 +161,7 @@ function install_components() {
 
     for component in "${components[@]}"
     do
-        yum install -y $component &
+        yum install -y -q $component >/dev/null 2>$component.log  &
         #sleep 1 &
         load $! $component
     done
