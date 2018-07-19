@@ -178,7 +178,7 @@ function install_composer() {
     load $kpid composer &
 
 
-    expected_signature=$(curl https://composer.github.io/installer.sig)
+    expected_signature=$(curl -s https://composer.github.io/installer.sig)
     php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
     actual_signature="$(php -r "echo hash_file('SHA384', 'composer-setup.php');")"
 
