@@ -73,9 +73,10 @@ function runas(){
         read -sp "${SPACE}Password: " password
         echo
 
-        #adduser $username
-        #echo $username:$password | chpasswd
-        #usermod -aG wheel $username
+        adduser $username
+        echo $username:$password | chpasswd
+        usermod -aG wheel $username
+
     elif [[ "$runas_user" =~ ^(n|N)[a-z]{0,1}$ ]]; then
         printf "${RED}${SPACE}Will run as root!${NC}\n"
     else
@@ -136,17 +137,14 @@ function setting_repos() {
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 
     yum install -y -q epel-release >/dev/null 2>epel.log &
-    #sleep 2 &
     load $! epel-release
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 
     yum install -y -q https://centos7.iuscommunity.org/ius-release.rpm  >/dev/null 2>ius.log &
-    #sleep 3 &
     load $! ius
     rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
 
     yum update -y -q >/dev/null 2>update.log &
-    #sleep 3 &
     load $! yum-update
 
 }
@@ -166,7 +164,6 @@ function install_components() {
     for component in "${components[@]}"
     do
         yum install -y -q $component >/dev/null 2>$component.log  &
-        #sleep 1 &
         load $! $component
     done
 }
