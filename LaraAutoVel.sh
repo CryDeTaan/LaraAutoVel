@@ -133,6 +133,8 @@ function setting_repos() {
 
     printf " 2. ${UL}Setting Repos${CLF}\n"
    
+    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
     yum install -y -q epel-release >/dev/null 2>epel.log &
     #sleep 2 &
     load $! epel-release
@@ -143,7 +145,6 @@ function setting_repos() {
     load $! ius
     rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
 
-    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
     yum update -y -q >/dev/null 2>update.log &
     #sleep 3 &
     load $! yum-update
