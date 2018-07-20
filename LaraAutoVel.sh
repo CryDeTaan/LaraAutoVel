@@ -155,7 +155,7 @@ function setting_repos() {
    
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 
-    yum install -y -q epel-release >/dev/null 2>epel.log &
+    yum insta -y -q epel-release >/dev/null 2>epel.log &
     load $! epel-release
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 
@@ -175,7 +175,7 @@ function install_components() {
 
     declare -a components=( "zsh" "vim" "git" "curl" "certbot" "php72u"
                        "php72u-cli" "php72u-fpm-nginx" "php72u-json"
-                       "php72u-mbstring" "php72u-xml" "blahddd"
+                       "php72u-mbstring" "php72u-xml"
                      )
     
     #declare -a components=( "zsh" "vim")
