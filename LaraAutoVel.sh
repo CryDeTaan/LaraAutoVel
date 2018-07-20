@@ -138,7 +138,9 @@ function load(){
         done
     done
 
-    if [[ $? = 0  ]]; then
+    rpm --query --queryformat "" $pid_name
+
+    if [[ $? = 0 && $pid_name != "ius" || "yum-update" ]]; then
         printf "$format_checked" $pid_name
     else
         printf "$format_failed" $pid_name
@@ -155,7 +157,7 @@ function setting_repos() {
    
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 
-    yum insta -y -q epel-release >/dev/null 2>epel.log &
+    yum install -y -q epel-release >/dev/null 2>epel.log &
     load $! epel-release
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 
