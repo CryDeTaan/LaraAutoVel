@@ -28,6 +28,7 @@ __author__="CryDeTaan"
 RED="\e[31m"
 BLACK="\e[30m"
 GREEN="\e[32m"
+YELLOW="\e[33m"
 NC="\e[0m"    # No colour
 
 # Formating
@@ -38,6 +39,8 @@ CLF="\e[0m"   # Clear formatting
 SPACE="    "    # Spacing
 
 CHECK_MARK="${GREEN}\xE2\x9C\x94${CLF}"
+BALLOT_X="${RED}\xE2\x9C\x98${CLF}"
+EXCLA_MARK="${YELLOW}\xE2\x9D\x97${CLF}"
 
 hide_cursor="\033[?25l"
 unhide_cursor="\033[?25h"
@@ -123,7 +126,12 @@ function load(){
             sleep 0.2
         done
     done
-    printf "$format_checked" $pid_name
+
+    if [[ $? = 0  ]]; then
+        printf "$format_checked" $pid_name
+    else
+        printf "$format_failed" $pid_name
+    fi
 
     printf "${unhide_cursor}"
 
@@ -156,7 +164,7 @@ function install_components() {
 
     declare -a components=( "zsh" "vim" "git" "curl" "certbot" "php72u"
                        "php72u-cli" "php72u-fpm-nginx" "php72u-json"
-                       "php72u-mbstring" "php72u-xml"
+                       "php72u-mbstring" "php72u-xml" "blahddd"
                      )
     
     #declare -a components=( "zsh" "vim")
