@@ -92,6 +92,17 @@ function runas(){
 
 }
 
+function set_locales() {
+
+# As you know Locale errors are always a problem, this is actually an ssh issue as your terminal client 
+# when oppening an ssh session wants to set the local to something that may not be on a remote system.
+# Adding LANG=en_US.utf-8 and LC_ALL=en_US.utf-8 to /etc/environment. This should sort it out. 
+
+echo LANG=en_US.utf-8 >> /etc/environment && echo LC_ALL=en_US.utf-8 >> /etc/environment
+export LANG=en_US.utf-8 && export LC_ALL=en_US.utf-8
+
+}
+
 
 
 function check_ssh() {
