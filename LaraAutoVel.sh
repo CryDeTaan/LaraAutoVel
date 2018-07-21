@@ -25,17 +25,17 @@ __author__="CryDeTaan"
 # https://en.wikipedia.org/wiki/ANSI_escape_code
 
 # Colours
-RED="\e[31m"
-BLACK="\e[30m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-NC="\e[0m"    # No colour
+RED="\033[31m"
+BLACK="\033[30m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+NC="\033[0m"    # No colour
 
 # Formating
-UL="\e[4m"    # Underline
-BLD="\e[1m"    # Bold
-CL="\e[K"     # Clear line
-CLF="\e[0m"   # Clear formatting
+UL="\033[4m"    # Underline
+BLD="\033[1m"    # Bold
+CL="\033[K"     # Clear line
+CLF="\033[0m"   # Clear formatting
 SPACE="    "    # Spacing
 
 CHECK_MARK="${GREEN}\xE2\x9C\x94${CLF}"
