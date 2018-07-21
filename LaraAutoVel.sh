@@ -138,9 +138,9 @@ function load(){
         done
     done
 
-    rpm --query --queryformat "" $pid_name
+    rpm --query $pid_name
 
-    if [[ $? = 0 && $pid_name != "ius" || $pid_name != "yum-update" ]]; then
+    if [[ $? == 0 || $pid_name == "yum-update" ]]; then
         printf "$format_checked" $pid_name
     else
         printf "$format_failed" $pid_name
@@ -162,7 +162,7 @@ function setting_repos() {
     rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
 
     yum install -y -q https://centos7.iuscommunity.org/ius-release.rpm  >/dev/null 2>ius.log &
-    load $! ius
+    load $! ius-release
     rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
 
     yum update -y -q >/dev/null 2>update.log &
