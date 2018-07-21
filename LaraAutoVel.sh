@@ -138,9 +138,9 @@ function load(){
         done
     done
 
-    rpm --query $pid_name >/dev/null 2>&1
 
     if [[ $? == 0 || $pid_name == "yum-update" ]]; then
+        rpm --query $pid_name >/dev/null 2>&1
         printf "$format_checked" $pid_name
     else
         printf "$format_failed" $pid_name
