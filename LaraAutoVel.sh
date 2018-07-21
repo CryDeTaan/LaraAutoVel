@@ -140,7 +140,7 @@ function load(){
 
     rpm --query --queryformat "" $pid_name
 
-    if [[ $? = 0 && $pid_name != "ius" || "yum-update" ]]; then
+    if [[ $? = 0 && $pid_name != "ius" || $pid_name != "yum-update" ]]; then
         printf "$format_checked" $pid_name
     else
         printf "$format_failed" $pid_name
