@@ -1,0 +1,14 @@
+server {
+
+    listen   443 http2 ssl;
+    server_name  ${fqdn};
+    
+    root   /var/www/html/${appName}/public;
+    index index.php;
+    
+    include /etc/nginx/default.d/*.conf;
+
+    ssl_certificate /etc/letsencrypt/live/${fqdn}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${fqdn}/privkey.pem;
+    
+}
