@@ -67,15 +67,21 @@ function banner() {
 
 function runas(){
 
-    # Setting some local variables for this funciton.
+    # Initially I wanted the ability to choose whether or not to run the web server as a normal user or as root.
+    # I have done a lot of work to make sure that the web server can run as normal user. So I decided to remove the ability to choose.
+    # 1. No, it's not because it's more secure, it was just to much effort to make it possible for very little benefit.
+    # 2. It's more secure ;p
+
+    # Setting some local variables for this function.
     local runas_user password
 
     # Read the inputs from the user. Should a user be created that will be used to manage the web server.
-    printf " 1. ${UL}It's recommended to create a new ${BLD}non${CLF}${UL}-root user (Default)${CLF}\n"
-    read -p "${SPACE}(Y)es: Create new user. (N)o: Run as root: "  runas_user
+    #printf " 1. ${UL}It's recommended to create a new ${BLD}non${CLF}${UL}-root user (Default)${CLF}\n"
+    printf " 1. ${UL}Let's create a ${BLD}non${CLF}${UL}-root user${CLF} to run this web server\n"
+    #read -p "${SPACE}(Y)es: Create new user. (N)o: Run as root: "  runas_user
 
     # If the input was to create a user, this is where it will happen. Else, let's print that the web server will be managed as root.
-    if [[ "$runas_user" =~ ^(y|Y)[a-z]{0,2}$ ]] || [[ ! $runas_user  ]] ; then
+    #if [[ "$runas_user" =~ ^(y|Y)[a-z]{0,2}$ ]] || [[ ! $runas_user  ]] ; then
         
         printf "${SPACE}Please enter the following details:\n"
         read -p "${SPACE}Username: " username
@@ -87,14 +93,14 @@ function runas(){
         echo $username:$password | chpasswd
         usermod -aG wheel $username
 
-    elif [[ "$runas_user" =~ ^(n|N)[a-z]{0,1}$ ]]; then
-        printf "${RED}${SPACE}Will run as root!${NC}\n"
-    else
-        banner
-        printf "\e[1A"
-        printf "${RED}${SPACE}Invalid option, please try again${NC}\n"
-        runas
-    fi
+    #elif [[ "$runas_user" =~ ^(n|N)[a-z]{0,1}$ ]]; then
+    #    printf "${RED}${SPACE}Will run as root!${NC}\n"
+    #else
+    #    banner
+    #    printf "\e[1A"
+    #    printf "${RED}${SPACE}Invalid option, please try again${NC}\n"
+    #    runas
+    #fi
 
 }
 
@@ -348,16 +354,31 @@ function install_composer() {
 }
 
 
-function install_dotfiles() {
- echo 'sd'
-}
+function git() {
 
+    printf " 4. ${UL}Cloning LaraAutoVel Repos${CLF}\n"
+
+    sleep 6000 &
+    kpid=$!
+    load $kpid git_clone &
+    load_pid=$!
+
+    git clone -q https://github.com/CryDeTaan/LaraAutoVel.git ~/$username/LaraAutoVel/
+
+    disown $kpid
+    kill $kpid
+    
+    wait $load_pid
+    # Print the failed ballot-x mart 
+    display_result 0 git_clone
+
+}
 
 function config_components() {
 
     # This function will call all the other configuration functions.
         
-    printf " 4. ${UL}Configuring Components${CLF}\n"
+    printf " 5. ${UL}Configuring Components${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -450,11 +471,6 @@ function conf_nginx() {
     return 0
 }
 
-function git() {
-
-    return 1
-    #git clone 
-}
 
 function conf_laravel() {
 
