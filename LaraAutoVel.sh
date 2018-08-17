@@ -356,6 +356,8 @@ function install_composer() {
 
 function git() {
 
+    #TODO: Add commenting
+
     printf " 4. ${UL}Cloning LaraAutoVel Repos${CLF}\n"
 
     sleep 6000 &
@@ -364,17 +366,24 @@ function git() {
     load_pid=$!
 
     git clone -q https://github.com/CryDeTaan/LaraAutoVel.git ~/$username/LaraAutoVel/
+    get_result=$?
 
     disown $kpid
     kill $kpid
     
     wait $load_pid
+
+    #TODO: Add logging  
+
+
     # Print the failed ballot-x mart 
-    display_result 0 git_clone
+    display_result $git_result git_clone
 
 }
 
 function config_components() {
+
+    # TODO: Add commenting 
 
     # This function will call all the other configuration functions.
         
@@ -428,17 +437,19 @@ function config_php() {
     local sed_result
 
     # The first comments out this listen = 127.0.0.1:9000
-    sed -i '/^listen = 127.*9000$/s/^/;/' /etc/php-fpm.d/www.conf
+    sed -i.bak '/^listen = 127.*9000$/s/^/;/' /etc/php-fpm.d/www.conf
     grep '^;listen = 127.*9000$' /etc/php-fpm.d/www.conf &>/dev/null
     declare -i sed_result=$?
 
     # Next uncomment this ;listen = /run/php-fpm/www.sock
-    sed -i '/^;listen = .*www.sock$/s/^;//' /etc/php-fpm.d/www.conf
+    sed -i.bak '/^;listen = .*www.sock$/s/^;//' /etc/php-fpm.d/www.conf
     grep '^listen = .*www.sock$' /etc/php-fpm.d/www.conf &>/dev/null
     sed_result=$sed_result+$?
 
     if [[ $sed_result -gt 0 ]]; then
         # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+
         return 1
     fi
 
@@ -450,21 +461,24 @@ function conf_nginx() {
 
     local sed_result
 
-    sed -i '/server\s127.*9000;$/s//#&/' /etc/nginx/conf.d/php-fpm.conf
+    sed -i.bak '/server\s127.*9000;$/s//#&/' /etc/nginx/conf.d/php-fpm.conf
     grep '^\s*#server 127.*9000;$' /etc/nginx/conf.d/php-fpm.conf &>/dev/null
     declare -i sed_result=$?
 
-    sed -i '/^\s*#server\s.*www.sock;$/s/#//' /etc/nginx/conf.d/php-fpm.conf
+    sed -i.bak '/^\s*#server\s.*www.sock;$/s/#//' /etc/nginx/conf.d/php-fpm.conf
     grep '^\s*server.*www.sock;$' /etc/nginx/conf.d/php-fpm.conf &>/dev/null
     sed_result=$sed_result+$?
 
-    #sed -i '/^\s*location \/ {$/,+1s/^/#/' /etc/nginx/nginx.conf
-    sed -i 'N;s/\(^\s*\)\(location\s*\/\s*{\)\n\(\s*\)\(}\).*$/\1#\2\n\3#\4/' /etc/nginx/nginx.conf
+   
+   # TODO: Add commenting 
+   #sed -i.bak '/^\s*location \/ {$/,+1s/^/#/' /etc/nginx/nginx.conf
+    sed -i.bak 'N;s/\(^\s*\)\(location\s*\/\s*{\)\n\(\s*\)\(}\).*$/\1#\2\n\3#\4/' /etc/nginx/nginx.conf
     grep -Pazo '^#\s*location \/ {$\R#\s*}$' /etc/nginx/nginx.conf &>/dev/null
     sed_result=$sed_result+$?
 
     if [[ $sed_result -gt 0 ]]; then
         # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
         return 1
     fi
 
@@ -504,6 +518,7 @@ function web_stuff() {
 
 clear
 banner
+set_locales
 runas
 setting_repos
 install_components
