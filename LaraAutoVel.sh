@@ -354,32 +354,6 @@ function install_composer() {
 }
 
 
-function git() {
-
-    #TODO: Add commenting
-
-    printf " 4. ${UL}Cloning LaraAutoVel Repos${CLF}\n"
-
-    sleep 6000 &
-    kpid=$!
-    load $kpid git_clone &
-    load_pid=$!
-
-    git clone -q https://github.com/CryDeTaan/LaraAutoVel.git ~/$username/LaraAutoVel/
-    get_result=$?
-
-    disown $kpid
-    kill $kpid
-    
-    wait $load_pid
-
-    #TODO: Add logging  
-
-
-    # Print the failed ballot-x mart 
-    display_result $git_result git_clone
-
-}
 
 function config_components() {
 
@@ -387,14 +361,14 @@ function config_components() {
 
     # This function will call all the other configuration functions.
         
-    printf " 5. ${UL}Configuring Components${CLF}\n"
+    printf " 4. ${UL}Configuring Component's defaults${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
 
     local components
 
-    declare -a components=("php=config_php" "nginx=conf_nginx")
+    declare -a components=("php=config_php" "nginx=conf_nginx" "config_SELinux=SELinux" "config_ssl=ssl"  )
 
 
     # Loop that will install each package.
@@ -485,25 +459,130 @@ function conf_nginx() {
     return 0
 }
 
+function config_SELinux() {
 
-function conf_laravel() {
+    # SELinux
+    
+    checkmodule -M -m -o php-fpm.mod php-fpm.te
+    semodule_package -o php-fpm.pp -m php-fpm.mod
+    semodule -i php-fpm.pp
+    semodule -l | grep php-fpm
 
- echo 'sd'
+    php-fpm.*
+    
+    
 }
-function conf_laravel() {
 
- echo 'sd'
+function config_ssl() {
+
+    openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096
+    mkdir -p /var/www/letsencrypt/.well-known/acme-challenge
+    echo "30 2 * * * certbot renew --post-hook 'nginx -s reload' >> /var/log/letsencrypt/le-renew.log" >> cronfile 
+    crontab cronfile 
+    rm cronfile
+    crontab -l
+
+
+
 }
 
-function user_permissions() {
+function framework_components() {
 
- echo 'sd'
+    # This function will be used to configure and setup the LaraAutoVel framework components. 
+    # This includes cloning the repository, setting the template config files, default configs, and 
+    # the let's encrypt config files.
+
+    printf " 5. ${UL}Setting up the LaraAutoVel Framework${CLF}\n"
+
+    # Keeping with the them of using the load() function.
+    # Let's loop over each of the functions while the component is being configured. 
+
+    local components
+
+    declare -a components=("git=git_clone" "symlinks=setting_symlinks" "starting_services=starting_services")
+
+
+    # Loop that will install each package.
+    for component in "${components[@]}"
+    do
+
+        set -- `echo $component | tr '=' ' '`
+	    component_name=$1
+	    component=$2
+
+        sleep 6000 &
+        kpid=$!
+        load $kpid $component_name &
+        load_pid=$!
+        
+        $component
+        config_result=$?
+
+        sleep 2
+
+        disown $kpid
+        kill $kpid
+
+        wait $load_pid
+        display_result $config_result $component_name
+
+    done
+
+
 }
 
-function set_selinux() {
 
- echo 'sd'
+
+function git_clone() {
+
+    # TODO: Add commenting
+
+    # Cloning the LaraAutoVel repo. 
+    git clone -q https://github.com/CryDeTaan/LaraAutoVel.git ~/$username/LaraAutoVel/
+
+    # Making sure the clone was successful 
+    git_result=$?
+
+
+    # TODO: Add logging
+
+    return $git_result
+
 }
+
+function settings_symlinks() {
+
+    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+
+    mkdir /users/$username/www
+
+    ln -s /var/www/html /users/$username/www/sites
+
+    ln -s /etc/nginx/conf.d /users/$username/www/conf.d
+
+}
+
+
+
+
+function setting_permissions() {
+    
+    setfacl -Rdm u:php-fpm:rwx /var/www/html
+    setfacl -m u:$username:rwx /var/www/html
+    setfacl -m u:$username:rwx /etc/nginx/conf.d
+}
+
+
+function starting_services() {
+
+    systemctl enable nginx
+    sudo systemctl start nginx
+
+    systemctl enable php-fpm
+    systemctl start php-fpm
+}
+
+
 
 function set_firewalld() {
 
