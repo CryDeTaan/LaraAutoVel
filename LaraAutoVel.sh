@@ -241,8 +241,7 @@ function setting_repos() {
     rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
 
     # 3. yum update
-    #yum update -y -q >/dev/null 2>update.log &
-    sleep 4 &
+    yum update -y -q >/dev/null 2>update.log &
     yum_pid=$!
 
     load $yum_pid yum-update
