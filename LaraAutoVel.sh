@@ -77,7 +77,7 @@ function runas(){
 
     # Read the inputs from the user. Should a user be created that will be used to manage the web server.
     #printf " 1. ${UL}It's recommended to create a new ${BLD}non${CLF}${UL}-root user (Default)${CLF}\n"
-    printf "\n 1. ${UL}Let's create a ${BLD}non${CLF}${UL}-root user${CLF}\n"
+    printf " 1. ${UL}Let's create a ${BLD}non${CLF}${UL}-root user${CLF}\n"
     #read -p "${SPACE}(Y)es: Create new user. (N)o: Run as root: "  runas_user
 
     # If the input was to create a user, this is where it will happen. Else, let's print that the web server will be managed as root.
