@@ -591,7 +591,7 @@ function git_clone() {
     declare -i execution_result=$?
 
 
-    chown -R $username:$username /home/$username/www
+    chown -R $username:$username /home/$username/LaraAutoVel
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -619,9 +619,6 @@ function setting_symlinks() {
     ln -s /etc/nginx/conf.d /home/$username/www/conf.d >/dev/null 2>>symlinks.log
     execution_result=$execution_result+$?
 
-    chown -R $username:$username /home/$username/www
-    execution_result=$execution_result+$?
-
      if [[ $execution_result -gt 0 ]]; then
         # TODO: Some logging required
         # TODO: Add the ability to restore the back up of the config file.
@@ -636,14 +633,17 @@ function setting_permissions() {
     
     local execution_result
 
-    setfacl -Rdm u:php-fpm:rwx /var/www/html >/dev/null 2>permissions.log
+    setfacl -m u:$username:rwx /etc/nginx/conf.d >/dev/null 2>>permissions.log
     declare -i execution_result=$?
 
     setfacl -m u:$username:rwx /var/www/html >/dev/null 2>>permissions.log
     execution_result=$execution_result+$?
 
-    setfacl -m u:$username:rwx /etc/nginx/conf.d >/dev/null 2>>permissions.log
+    setfacl -Rdm u:php-fpm:rwx /var/www/html >/dev/null 2>permissions.log
     execution_result=$execution_result+$?
+
+    #chown -R $username:$username /home/$username/www
+    #execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
         # TODO: Some logging required
@@ -693,6 +693,7 @@ function starting_and_testing() {
                             "test_site=test_site" 
                             "starting_services=starting_services"
                             "testing=testing"
+                            "cleanup=testing_cleanup"
                           )
 
     # Loop that will install each package.
@@ -730,13 +731,16 @@ function test_site() {
     
     local execution_result
 
-    mkdir /home/$username/www/sites/test
+    mkdir /home/$username/www/sites/test >/dev/null 2>test_site.log
     declare -i execution_result=$?
 
-    echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php
+    echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php >/dev/null 2>>test_site.log
     execution_result=$execution_result+$?
 
-    sed -e 's/${fqdn}\/public/127.0.0.1/' -e 's/${appName}/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/conf.d/test.conf
+    sed -e 's/443.*;$/80;/'  -e 's/${fqdn}/127.0.0.1/' -e 's/${appName}\/public/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/conf.d/test.conf >/dev/null 2>>test_site.log
+    execution_result=$execution_result+$?
+
+    mv /etc/nginx/default.d/ssl-redirect.conf /etc/nginx/default.d/ssl-redirect.conf.tmp >/dev/null 2>>test_site.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -784,6 +788,30 @@ function testing() {
     declare -i execution_result=$?
 
     php -v | grep -Po "PHP (\d.){2}\d\s\(cli\)" >>testing_services.log 2>&1
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
+}
+
+function testing_cleanup() {
+
+    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+    
+    local execution_result
+
+    rm -rf /home/$username/www/sites/test >testing_cleanup.log 2>&1
+    declare -i execution_result=$?
+
+    rm -f /home/$username/www/conf.d/test.conf >>testing_cleanup.log 2>&1
+    execution_result=$execution_result+$?
+
+    mv /etc/nginx/default.d/ssl-redirect.conf.tmp /etc/nginx/default.d/ssl-redirect.conf >>testing_cleanup.log 2>&1
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
