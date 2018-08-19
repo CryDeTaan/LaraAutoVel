@@ -77,7 +77,7 @@ function runas(){
 
     # Read the inputs from the user. Should a user be created that will be used to manage the web server.
     #printf " 1. ${UL}It's recommended to create a new ${BLD}non${CLF}${UL}-root user (Default)${CLF}\n"
-    printf " 1. ${UL}Let's create a ${BLD}non${CLF}${UL}-root user${CLF} to run this web server\n"
+    printf "\n 1. ${UL}Let's create a ${BLD}non${CLF}${UL}-root user${CLF}\n"
     #read -p "${SPACE}(Y)es: Create new user. (N)o: Run as root: "  runas_user
 
     # If the input was to create a user, this is where it will happen. Else, let's print that the web server will be managed as root.
@@ -207,7 +207,7 @@ function setting_repos() {
 
     local repo_pid
 
-    printf " 2. ${UL}Setting Repos${CLF}\n"
+    printf "\n 2. ${UL}Setting Repos${CLF}\n"
    
 
     declare -a repos=(  "epel-release=epel-release"
@@ -258,13 +258,13 @@ function install_components() {
     # The package is installed in the background, but passing the PID and the package name to the load() function.
     # The stdout from yum will be suppressed although the stderr will be sent to a log file. 
 
-    printf " 3. ${UL}Installing Components${CLF}\n"
+    printf "\n 3. ${UL}Installing Components${CLF}\n"
 
     # All the packages in an array.
     local components
     declare -a components=( "zsh" "vim" "git" "curl" "certbot" "php72u"
                        "php72u-cli" "php72u-fpm-nginx" "php72u-json"
-                       "php72u-mbstring" "php72u-xml" "blah"
+                       "php72u-mbstring" "php72u-xml" 
                      )
     
     # Loop that will install each package.
@@ -360,14 +360,14 @@ function config_components() {
 
     # This function will call all the other configuration functions.
         
-    printf " 4. ${UL}Configuring Component's defaults${CLF}\n"
+    printf "\n 4. ${UL}Configuring Component's defaults${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
 
     local components
 
-    declare -a components=("php=config_php" "nginx=conf_nginx" "config_SELinux=SELinux" "config_ssl=ssl"  )
+    declare -a components=("php=config_php" "nginx=conf_nginx" "SELinux=config_SELinux" "ssl=config_ssl"  )
 
 
     # Loop that will install each package.
@@ -419,6 +419,11 @@ function config_php() {
     grep '^listen = .*www.sock$' /etc/php-fpm.d/www.conf &>/dev/null
     sed_result=$sed_result+$?
 
+    # Next uncomment this ;listen = /run/php-fpm/www.sock
+    sed -i.bak '/^;listen.acl_users\s*=\s*nginx$/s/^;//' /etc/php-fpm.d/www.conf
+    grep '^listen.acl_users\s*=\s*nginx$' /etc/php-fpm.d/www.conf &>/dev/null
+    sed_result=$sed_result+$?
+
     if [[ $sed_result -gt 0 ]]; then
         # TODO: Some logging required
         # TODO: Add the ability to restore the back up of the config file.
@@ -462,26 +467,65 @@ function config_SELinux() {
 
     # SELinux
     
-    checkmodule -M -m -o php-fpm.mod php-fpm.te
-    semodule_package -o php-fpm.pp -m php-fpm.mod
-    semodule -i php-fpm.pp
-    semodule -l | grep php-fpm
+    local execution_result
 
-    php-fpm.*
+    curl -s -O https://raw.githubusercontent.com/CryDeTaan/LaraAutoVel/master/SELiux/php-fpm.te >/dev/null 2>SELinux.log
+    declare -i execution_result=$?
+
+    checkmodule -M -m -o php-fpm.mod php-fpm.te >/dev/null 2>>SELinux.log
+    execution_result=$execution_result+$?
+
+    semodule_package -o php-fpm.pp -m php-fpm.mod >/dev/null 2>>SELinux.log
+    execution_result=$execution_result+$?
+
+    semodule -i php-fpm.pp >/dev/null 2>>SELinux.log
+    execution_result=$execution_result+$?
+
+    semodule -l | grep php-fpm >/dev/null 2>>SELinux.log
+    execution_result=$execution_result+$?
+
+    rm -f php-fpm.* >/dev/null 2>>SELinux.log
+    execution_result=$execution_result+$?
     
-    
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
+
 }
 
 function config_ssl() {
 
-    openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096
-    mkdir -p /var/www/letsencrypt/.well-known/acme-challenge
+    local execution_result
+
+    openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 >/dev/null 2>openssl_dhparam.log
+    declare -i execution_result=$?
+
+    mkdir -p /var/www/letsencrypt/.well-known/acme-challenge >/dev/null 2>ssl.log
+    execution_result=$execution_result+$?
+
     echo "30 2 * * * certbot renew --post-hook 'nginx -s reload' >> /var/log/letsencrypt/le-renew.log" >> cronfile 
-    crontab cronfile 
-    rm cronfile
-    crontab -l
+    execution_result=$execution_result+$?
 
+    crontab cronfile >/dev/null 2>>ssl.log
+    execution_result=$execution_result+$?
 
+    rm -f cronfile >/dev/null 2>>ssl.log
+    execution_result=$execution_result+$?
+
+    crontab -l | grep -P '^\d{1,2}.*certbot\srenew.*log$' >/dev/null 2>>ssl.log
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
 
 }
 
@@ -491,15 +535,19 @@ function framework_components() {
     # This includes cloning the repository, setting the template config files, default configs, and 
     # the let's encrypt config files.
 
-    printf " 5. ${UL}Setting up the LaraAutoVel Framework${CLF}\n"
+    printf "\ 5. ${UL}Setting up the LaraAutoVel Framework${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
 
     local components
 
-    declare -a components=("git=git_clone" "symlinks=setting_symlinks" "starting_services=starting_services")
-
+    declare -a components=(
+                            "git=git_clone" 
+                            "symlinks=setting_symlinks" 
+                            "permissions=setting_permissions" 
+                            "nginx=setting_nginx"
+                          )
 
     # Loop that will install each package.
     for component in "${components[@]}"
@@ -536,52 +584,216 @@ function git_clone() {
 
     # TODO: Add commenting
 
+    local execution_result
+
     # Cloning the LaraAutoVel repo. 
-    git clone -q https://github.com/CryDeTaan/LaraAutoVel.git ~/$username/LaraAutoVel/
-
-    # Making sure the clone was successful 
-    git_result=$?
+    git clone -q https://github.com/CryDeTaan/LaraAutoVel.git /home/$username/LaraAutoVel/ 2>>git.log
+    declare -i execution_result=$?
 
 
-    # TODO: Add logging
+    chown -R $username:$username /home/$username/www
+    execution_result=$execution_result+$?
 
-    return $git_result
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
 
 }
 
-function settings_symlinks() {
+function setting_symlinks() {
 
     # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
 
-    mkdir /users/$username/www
+    local execution_result
 
-    ln -s /var/www/html /users/$username/www/sites
+    mkdir -p /home/$username/www >/dev/null 2>symlinks.log
+    declare -i execution_result=$?
 
-    ln -s /etc/nginx/conf.d /users/$username/www/conf.d
+    ln -s /var/www/html /home/$username/www/sites >/dev/null 2>>symlinks.log
+    execution_result=$execution_result+$?
 
+    ln -s /etc/nginx/conf.d /home/$username/www/conf.d >/dev/null 2>>symlinks.log
+    execution_result=$execution_result+$?
+
+    chown -R $username:$username /home/$username/www
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
 }
-
-
 
 
 function setting_permissions() {
     
-    setfacl -Rdm u:php-fpm:rwx /var/www/html
-    setfacl -m u:$username:rwx /var/www/html
-    setfacl -m u:$username:rwx /etc/nginx/conf.d
+    local execution_result
+
+    setfacl -Rdm u:php-fpm:rwx /var/www/html >/dev/null 2>permissions.log
+    declare -i execution_result=$?
+
+    setfacl -m u:$username:rwx /var/www/html >/dev/null 2>>permissions.log
+    execution_result=$execution_result+$?
+
+    setfacl -m u:$username:rwx /etc/nginx/conf.d >/dev/null 2>>permissions.log
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
 }
 
+
+function setting_nginx() {
+
+    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+
+    local execution_result
+
+    cp /home/$username/LaraAutoVel/nginx/*.conf /etc/nginx/default.d/ >/dev/null 2>nginx_config.log
+    declare -i execution_result=$?
+
+    cp /home/$username/LaraAutoVel/ssl/*.conf /etc/nginx/default.d/ >/dev/null 2>>nginx_config.log
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
+}
+
+function starting_and_testing() {
+
+    # This function will be used to configure and setup the LaraAutoVel framework components. 
+    # This includes cloning the repository, setting the template config files, default configs, and 
+    # the let's encrypt config files.
+
+    printf "\n 6. ${UL}Starting and testing services${CLF}\n"
+
+    # Keeping with the them of using the load() function.
+    # Let's loop over each of the functions while the component is being configured. 
+
+    local components
+
+    declare -a components=(
+                            "test_site=test_site" 
+                            "starting_services=starting_services"
+                            "testing=testing"
+                          )
+
+    # Loop that will install each package.
+    for component in "${components[@]}"
+    do
+
+        set -- `echo $component | tr '=' ' '`
+	    component_name=$1
+	    component=$2
+
+        sleep 6000 &
+        kpid=$!
+        load $kpid $component_name &
+        load_pid=$!
+        
+        $component
+        config_result=$?
+
+        sleep 2
+
+        disown $kpid
+        kill $kpid
+
+        wait $load_pid
+        display_result $config_result $component_name
+
+    done
+
+
+}
+
+function test_site() {
+
+    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+    
+    local execution_result
+
+    mkdir /home/$username/www/sites/test
+    declare -i execution_result=$?
+
+    echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php
+    execution_result=$execution_result+$?
+
+    sed -e 's/${fqdn}\/public/127.0.0.1/' -e 's/${appName}/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/conf.d/test.conf
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
+}
 
 function starting_services() {
 
-    systemctl enable nginx
-    sudo systemctl start nginx
+    local execution_result
 
-    systemctl enable php-fpm
-    systemctl start php-fpm
+    systemctl enable nginx >/dev/null 2>starting_services.log
+    declare -i execution_result=$?
+
+    systemctl start nginx >/dev/null 2>>starting_services.log
+    execution_result=$execution_result+$?
+
+    systemctl enable php-fpm >/dev/null 2>>starting_services.log
+    execution_result=$execution_result+$?
+
+    systemctl start php-fpm >/dev/null 2>>starting_services.log
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
 }
 
 
+function testing() {
+
+    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+    
+    local execution_result
+
+    curl -s http://172.16.200.160/info.php | grep -Po "PHP Version (\d.){2}\d" >testing_services.log 2>&1
+    declare -i execution_result=$?
+
+    php -v | grep -Po "PHP (\d.){2}\d\s\(cli\)" >>testing_services.log 2>&1
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
+}
 
 function set_firewalld() {
 
@@ -601,4 +813,6 @@ runas
 setting_repos
 install_components
 config_components
+framework_components
+starting_and_testing
 #echo Done
