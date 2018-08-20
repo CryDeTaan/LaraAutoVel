@@ -731,7 +731,7 @@ function test_site() {
     mkdir /home/$username/www/sites/test >/dev/null 2>test_site.log
     declare -i execution_result=$?
 
-    echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php >/dev/null 2>>test_site.log
+    echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php 2>>test_site.log
     execution_result=$execution_result+$?
 
     sed -e 's/443.*;$/80;/'  -e 's/${fqdn}/127.0.0.1/' -e 's/${appName}\/public/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/conf.d/test.conf 2>>test_site.log
