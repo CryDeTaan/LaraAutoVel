@@ -367,7 +367,7 @@ function config_components() {
 
     local components
 
-    declare -a components=("php=config_php" "nginx=conf_nginx" "SELinux=config_SELinux" "ssl=config_ssl"  )
+    declare -a components=("php=config_php" "nginx=conf_nginx")
 
 
     # Loop that will install each package.
@@ -463,6 +463,52 @@ function conf_nginx() {
     return 0
 }
 
+
+function applying_security() {
+
+    # TODO: Add commenting 
+
+    # This function will call all the other configuration functions.
+        
+    printf "\n 5. ${UL}Applying Securing${CLF}\n"
+
+    # Keeping with the them of using the load() function.
+    # Let's loop over each of the functions while the component is being configured. 
+
+    local components
+
+    declare -a components=("SELinux=config_SELinux" "ssl=config_ssl"  )
+
+
+    # Loop that will install each package.
+    for component in "${components[@]}"
+    do
+
+        set -- `echo $component | tr '=' ' '`
+	    component_name=$1
+	    component=$2
+
+        sleep 6000 &
+        kpid=$!
+        load $kpid $component_name &
+        load_pid=$!
+        
+        $component
+        config_result=$?
+
+        sleep 2
+
+        disown $kpid
+        kill $kpid
+
+        wait $load_pid
+        display_result $config_result $component_name
+
+    done
+
+
+}
+
 function config_SELinux() {
 
     # SELinux
@@ -535,7 +581,7 @@ function framework_components() {
     # This includes cloning the repository, setting the template config files, default configs, and 
     # the let's encrypt config files.
 
-    printf "\n 5. ${UL}Setting up the LaraAutoVel Framework${CLF}\n"
+    printf "\n 6. ${UL}Setting up the LaraAutoVel Framework${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -679,7 +725,7 @@ function starting_and_testing() {
     # This includes cloning the repository, setting the template config files, default configs, and 
     # the let's encrypt config files.
 
-    printf "\n 6. ${UL}Starting and testing services${CLF}\n"
+    printf "\n 7. ${UL}Starting and testing services${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -838,6 +884,7 @@ runas
 setting_repos
 install_components
 config_components
+applying_security
 framework_components
 starting_and_testing
 #echo Done
