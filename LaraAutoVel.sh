@@ -501,7 +501,8 @@ function config_ssl() {
 
     local execution_result
 
-    openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 >/dev/null 2>openssl_dhparam.log
+    #openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 >/dev/null 2>openssl_dhparam.log
+    openssl dhparam -out /etc/ssl/certs/dhparam.pem 1024 >/dev/null 2>openssl_dhparam.log
     declare -i execution_result=$?
 
     mkdir -p /var/www/letsencrypt/.well-known/acme-challenge >/dev/null 2>ssl.log
@@ -690,7 +691,6 @@ function starting_and_testing() {
                             "test_site=test_site" 
                             "starting_services=starting_services"
                             "testing=testing"
-                            "cleanup=testing_cleanup"
                           )
 
     # Loop that will install each package.
