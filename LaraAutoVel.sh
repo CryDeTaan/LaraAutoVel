@@ -535,7 +535,7 @@ function framework_components() {
     # This includes cloning the repository, setting the template config files, default configs, and 
     # the let's encrypt config files.
 
-    printf "\ 5. ${UL}Setting up the LaraAutoVel Framework${CLF}\n"
+    printf "\n 5. ${UL}Setting up the LaraAutoVel Framework${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -641,9 +641,6 @@ function setting_permissions() {
 
     setfacl -Rdm u:php-fpm:rwx /var/www/html >/dev/null 2>permissions.log
     execution_result=$execution_result+$?
-
-    #chown -R $username:$username /home/$username/www
-    #execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
         # TODO: Some logging required
@@ -784,7 +781,7 @@ function testing() {
     
     local execution_result
 
-    curl -s http://172.16.200.160/info.php | grep -Po "PHP Version (\d.){2}\d" >testing_services.log 2>&1
+    curl -s http://127.0.0.1/info.php | grep -Po "PHP Version (\d.){2}\d" >testing_services.log 2>&1
     declare -i execution_result=$?
 
     php -v | grep -Po "PHP (\d.){2}\d\s\(cli\)" >>testing_services.log 2>&1
