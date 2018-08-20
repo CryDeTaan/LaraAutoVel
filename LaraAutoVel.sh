@@ -477,7 +477,7 @@ function applying_security() {
 
     local components
 
-    declare -a components=("SELinux=config_SELinux" "ssl=config_ssl"  )
+    declare -a components=("SELinux=config_selinux" "ssl=config_ssl" "firewalld=config_firewalld" )
 
 
     # Loop that will install each package.
@@ -509,7 +509,7 @@ function applying_security() {
 
 }
 
-function config_SELinux() {
+function config_selinux() {
 
     # SELinux
     
@@ -563,6 +563,29 @@ function config_ssl() {
     execution_result=$execution_result+$?
 
     crontab -l | grep -P '^\d{1,2}.*certbot\srenew.*log$' >/dev/null 2>>ssl.log
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
+
+}
+
+function config_firewalld() {
+
+    local execution_result
+
+    firewall-cmd --permanent --zone=public --add-service=http 
+    declare -i execution_result=$?
+
+    firewall-cmd --permanent --zone=public --add-service=https
+    execution_result=$execution_result+$?
+
+    firewall-cmd --reload
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
