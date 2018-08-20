@@ -501,8 +501,7 @@ function config_ssl() {
 
     local execution_result
 
-    #openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 >/dev/null 2>openssl_dhparam.log
-    openssl dhparam -out /etc/ssl/certs/dhparam.pem 1024 >/dev/null 2>openssl_dhparam.log
+    openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 >/dev/null 2>openssl_dhparam.log
     declare -i execution_result=$?
 
     mkdir -p /var/www/letsencrypt/.well-known/acme-challenge >/dev/null 2>ssl.log
@@ -691,6 +690,7 @@ function starting_and_testing() {
                             "test_site=test_site" 
                             "starting_services=starting_services"
                             "testing=testing"
+                            "cleanup=testing_cleanup"
                           )
 
     # Loop that will install each package.
@@ -734,7 +734,7 @@ function test_site() {
     echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php >/dev/null 2>>test_site.log
     execution_result=$execution_result+$?
 
-    sed -e 's/443.*;$/80;/'  -e 's/${fqdn}/127.0.0.1/' -e 's/${appName}\/public/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/conf.d/test.conf >/dev/null 2>>test_site.log
+    sed -e 's/443.*;$/80;/'  -e 's/${fqdn}/127.0.0.1/' -e 's/${appName}\/public/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/conf.d/test.conf 2>>test_site.log
     execution_result=$execution_result+$?
 
     mv /etc/nginx/default.d/ssl-redirect.conf /etc/nginx/default.d/ssl-redirect.conf.tmp >/dev/null 2>>test_site.log
