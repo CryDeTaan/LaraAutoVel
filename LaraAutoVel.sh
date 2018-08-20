@@ -264,7 +264,7 @@ function install_components() {
     local components
     declare -a components=( "zsh" "vim" "git" "curl" "certbot" "php72u"
                        "php72u-cli" "php72u-fpm-nginx" "php72u-json"
-                       "php72u-mbstring" "php72u-xml" 
+                       "php72u-mbstring" "php72u-xml" "firewalld" 
                      )
     
     # Loop that will install each package.
@@ -470,7 +470,7 @@ function applying_security() {
 
     # This function will call all the other configuration functions.
         
-    printf "\n 5. ${UL}Applying Securing${CLF}\n"
+    printf "\n 5. ${UL}Applying Security${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -579,13 +579,13 @@ function config_firewalld() {
 
     local execution_result
 
-    firewall-cmd --permanent --zone=public --add-service=http 
+    firewall-cmd --permanent --zone=public --add-service=http >/dev/null 2>firewalld.log
     declare -i execution_result=$?
 
-    firewall-cmd --permanent --zone=public --add-service=https
+    firewall-cmd --permanent --zone=public --add-service=https >/dev/null 2>>firewalld.log
     execution_result=$execution_result+$?
 
-    firewall-cmd --reload
+    firewall-cmd --reload >/dev/null 2>>firewalld.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
