@@ -367,7 +367,7 @@ function config_components() {
 
     local components
 
-    declare -a components=("php=config_php" "nginx=conf_nginx")
+    declare -a components=("php=config_php" "nginx=conf_nginx" "starting_services=starting_services")
 
 
     # Loop that will install each package.
@@ -463,6 +463,30 @@ function conf_nginx() {
     return 0
 }
 
+function starting_services() {
+
+    local execution_result
+
+    systemctl enable nginx >/dev/null 2>starting_services.log
+    declare -i execution_result=$?
+
+    systemctl start nginx >/dev/null 2>>starting_services.log
+    execution_result=$execution_result+$?
+
+    systemctl enable php-fpm >/dev/null 2>>starting_services.log
+    execution_result=$execution_result+$?
+
+    systemctl start php-fpm >/dev/null 2>>starting_services.log
+    execution_result=$execution_result+$?
+
+     if [[ $execution_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
+}
 
 function applying_security() {
 
@@ -473,7 +497,7 @@ function applying_security() {
     printf "\n 5. ${UL}Applying Security${CLF}\n"
 
     # Keeping with the them of using the load() function.
-    # Let's loop over each of the functions while the component is being configured. 
+    # Let's loop over each of the functions while the component is being onfigured. 
 
     local components
 
@@ -766,7 +790,7 @@ function starting_and_testing() {
 
     declare -a components=(
                             "test_site=test_site" 
-                            "starting_services=starting_services"
+                            "restarting_services=restarting_services"
                             "testing=testing"
                             "cleanup=testing_cleanup"
                           )
@@ -831,16 +855,10 @@ function starting_services() {
 
     local execution_result
 
-    systemctl enable nginx >/dev/null 2>starting_services.log
+    systemctl restart nginx >/dev/null 2>>starting_services.log
     declare -i execution_result=$?
 
-    systemctl start nginx >/dev/null 2>>starting_services.log
-    execution_result=$execution_result+$?
-
-    systemctl enable php-fpm >/dev/null 2>>starting_services.log
-    execution_result=$execution_result+$?
-
-    systemctl start php-fpm >/dev/null 2>>starting_services.log
+    systemctl restart php-fpm >/dev/null 2>>starting_services.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
