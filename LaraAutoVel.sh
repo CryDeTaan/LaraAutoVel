@@ -477,7 +477,7 @@ function applying_security() {
 
     local components
 
-    declare -a components=("SELinux=config_selinux" "ssl=config_ssl" "firewalld=config_firewalld" )
+    declare -a components=("SELinux=config_selinux" "lets_encrypt=config_ssl" "firewalld=config_firewalld" )
 
 
     # Loop that will install each package.
@@ -565,6 +565,9 @@ function config_ssl() {
     crontab -l | grep -P '^\d{1,2}.*certbot\srenew.*log$' >/dev/null 2>>ssl.log
     execution_result=$execution_result+$?
 
+    nginx -s reload
+    execution_result=$execution_result+$?
+
      if [[ $execution_result -gt 0 ]]; then
         # TODO: Some logging required
         # TODO: Add the ability to restore the back up of the config file.
@@ -579,8 +582,14 @@ function config_firewalld() {
 
     local execution_result
 
-    firewall-cmd --permanent --zone=public --add-service=http >/dev/null 2>firewalld.log
+    systemctl enable firewalld >/dev/null 2>firewalld.log
     declare -i execution_result=$?
+
+    systemctl start firewalld>/dev/null 2>>firewalld.log
+    execution_result=$execution_result+$?
+
+    firewall-cmd --permanent --zone=public --add-service=http >/dev/null 2>>firewalld.log
+    execution_result=$execution_result+$?
 
     firewall-cmd --permanent --zone=public --add-service=https >/dev/null 2>>firewalld.log
     execution_result=$execution_result+$?
