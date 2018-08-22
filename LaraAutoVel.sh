@@ -262,7 +262,7 @@ function install_components() {
 
     # All the packages in an array.
     local components
-    declare -a components=( "zsh" "vim" "git" "curl" "certbot" "php72u"
+    declare -a components=( "zsh" "vim" "git" "curl" "unzip" "certbot" "php72u"
                        "php72u-cli" "php72u-fpm-nginx" "php72u-json"
                        "php72u-mbstring" "php72u-xml" "firewalld" 
                      )
