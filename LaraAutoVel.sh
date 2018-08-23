@@ -784,7 +784,7 @@ function starting_and_testing() {
     # This includes cloning the repository, setting the template config files, default configs, and 
     # the let's encrypt config files.
 
-    printf "\n 7. ${UL}Starting and testing services${CLF}\n"
+    printf "\n 7. ${UL}Testing services${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -839,7 +839,7 @@ function test_site() {
     echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php 2>>test_site.log
     execution_result=$execution_result+$?
 
-    sed -e 's/443.*;$/80;/'  -e 's/${fqdn}/127.0.0.1/' -e 's/${appName}\/public/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/conf.d/test.conf 2>>test_site.log
+    sed -e 's/443.*;$/80;/'  -e 's/${fqdn}/127.0.0.1/' -e 's/${appName}\/public/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/sites.conf.d/test.conf 2>>test_site.log
     execution_result=$execution_result+$?
 
     mv /etc/nginx/default.d/ssl-redirect.conf /etc/nginx/default.d/ssl-redirect.conf.tmp &>/dev/null 2>>test_site.log
@@ -854,7 +854,7 @@ function test_site() {
     return 0
 }
 
-function starting_services() {
+function restarting_services() {
 
     local execution_result
 
