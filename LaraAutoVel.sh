@@ -919,17 +919,6 @@ function testing_cleanup() {
     return 0
 }
 
-function set_firewalld() {
-
- echo 'sd'
-}
-
-
-
-function web_stuff() {
-    su -c "bash -c '$(curl -s https://raw)'" - $username
-}
-
 clear
 banner
 set_locales
@@ -940,4 +929,3 @@ config_components
 applying_security
 framework_components
 starting_and_testing
-#echo Done
