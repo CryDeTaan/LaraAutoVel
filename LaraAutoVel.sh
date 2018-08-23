@@ -741,7 +741,7 @@ function setting_permissions() {
     
     local execution_result
 
-    setfacl -m u:$username:rwx /etc/nginx/conf.d &>/dev/null 2>>permissions.log
+    setfacl -m u:$username:rwx /etc/nginx/sites.conf.d &>/dev/null 2>>permissions.log
     declare -i execution_result=$?
 
     setfacl -m u:$username:rwx /var/www/html &>/dev/null 2>>permissions.log
