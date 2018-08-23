@@ -721,6 +721,9 @@ function setting_symlinks() {
     ln -s /var/www/html /home/$username/www/sites &>/dev/null 2>>symlinks.log
     execution_result=$execution_result+$?
 
+    mkdir /etc/nginx/sites.conf.d &>/dev/null
+    execution_result=$execution_result+$?
+
     ln -s /etc/nginx/sites.conf.d /home/$username/www/sites.conf.d &>/dev/null 2>>symlinks.log
     execution_result=$execution_result+$?
 
