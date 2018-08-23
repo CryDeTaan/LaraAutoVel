@@ -447,14 +447,21 @@ function conf_nginx() {
     grep '^\s*server.*www.sock;$' /etc/nginx/conf.d/php-fpm.conf &>/dev/null
     sed_result=$sed_result+$?
     
-    sed -i.bak 'N;s/\(\s*\)\(include.*\/conf\.d\/.*conf;$\)/\1\2\1include \/etc\/nginx\/sites\.conf\.d\/\*\.conf;/' /etc/nginx/nginx.conf
-    grep 'include.*sites.*conf;' /etc/nginx/nginx.conf &>/dev/null
+    sed -i.bak '/server {/,$d' /etc/nginx/nginx.conf &>/dev/null
     sed_result=$sed_result+$?
 
-   # TODO: Add commenting 
-   #sed -i.bak '/^\s*location \/ {$/,+1s/^/#/' /etc/nginx/nginx.conf
-    sed -i 'N;s/\(^\s*\)\(location\s*\/\s*{\)\n\(\s*\)\(}\).*$/\1#\2\n\3#\4/' /etc/nginx/nginx.conf
-    grep -Pazo '^#\s*location \/ {$\R#\s*}$' /etc/nginx/nginx.conf &>/dev/null
+    cat >> /etc/nginx/nginx.conf << EOF
+    include /etc/nginx/sites.conf.d/*.conf;
+
+    server {
+        listen       80 default_server;
+        listen       443 default_server;
+        server_name  _;
+        return       444;
+    }
+
+}
+EOF
     sed_result=$sed_result+$?
 
     if [[ $sed_result -gt 0 ]]; then
