@@ -226,7 +226,7 @@ function setting_repos() {
         repo_name=$1
         repo=$2
 
-        yum install -y -q $repo  >/dev/null 2>$repo_name.log &
+        yum install -y -q $repo  &>/dev/null 2>$repo_name.log &
         repo_pid=$!
 
         load $repo_pid $repo_name
@@ -241,7 +241,7 @@ function setting_repos() {
     rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
 
     # 3. yum update
-    yum update -y -q >/dev/null 2>update.log &
+    yum update -y -q &>/dev/null 2>update.log &
     yum_pid=$!
 
     load $yum_pid yum-update
@@ -270,7 +270,7 @@ function install_components() {
     # Loop that will install each package.
     for component in "${components[@]}"
     do
-        yum install -y -q $component >/dev/null 2>$component.log  &    
+        yum install -y -q $component &>/dev/null 2>$component.log  &    
         component_pid=$!
 
         load $component_pid $component
@@ -446,11 +446,14 @@ function conf_nginx() {
     sed -i.bak '/^\s*#server\s.*www.sock;$/s/#//' /etc/nginx/conf.d/php-fpm.conf
     grep '^\s*server.*www.sock;$' /etc/nginx/conf.d/php-fpm.conf &>/dev/null
     sed_result=$sed_result+$?
+    
+    sed -i.bak 'N;s/\(^\s*\)\(include.*\/conf\.d\/.*conf;\)/\1\2\n\1include \/etc\/nginx\/sites\.conf\.d\/\*\.conf;/' /etc/nginx/nginx.conf
+    grep 'include.*sites.*conf;' /etc/nginx/nginx.conf &>/dev/null
+    sed_result=$sed_result+$?
 
-   
    # TODO: Add commenting 
    #sed -i.bak '/^\s*location \/ {$/,+1s/^/#/' /etc/nginx/nginx.conf
-    sed -i.bak 'N;s/\(^\s*\)\(location\s*\/\s*{\)\n\(\s*\)\(}\).*$/\1#\2\n\3#\4/' /etc/nginx/nginx.conf
+    sed -i 'N;s/\(^\s*\)\(location\s*\/\s*{\)\n\(\s*\)\(}\).*$/\1#\2\n\3#\4/' /etc/nginx/nginx.conf
     grep -Pazo '^#\s*location \/ {$\R#\s*}$' /etc/nginx/nginx.conf &>/dev/null
     sed_result=$sed_result+$?
 
@@ -467,16 +470,16 @@ function starting_services() {
 
     local execution_result
 
-    systemctl enable nginx >/dev/null 2>starting_services.log
+    systemctl enable nginx &>/dev/null 2>starting_services.log
     declare -i execution_result=$?
 
-    systemctl start nginx >/dev/null 2>>starting_services.log
+    systemctl start nginx &>/dev/null 2>>starting_services.log
     execution_result=$execution_result+$?
 
-    systemctl enable php-fpm >/dev/null 2>>starting_services.log
+    systemctl enable php-fpm &>/dev/null 2>>starting_services.log
     execution_result=$execution_result+$?
 
-    systemctl start php-fpm >/dev/null 2>>starting_services.log
+    systemctl start php-fpm &>/dev/null 2>>starting_services.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -539,22 +542,22 @@ function config_selinux() {
     
     local execution_result
 
-    curl -s -O https://raw.githubusercontent.com/CryDeTaan/LaraAutoVel/master/SELiux/php-fpm.te >/dev/null 2>SELinux.log
+    curl -s -O https://raw.githubusercontent.com/CryDeTaan/LaraAutoVel/master/SELiux/php-fpm.te &>/dev/null 2>SELinux.log
     declare -i execution_result=$?
 
-    checkmodule -M -m -o php-fpm.mod php-fpm.te >/dev/null 2>>SELinux.log
+    checkmodule -M -m -o php-fpm.mod php-fpm.te &>/dev/null 2>>SELinux.log
     execution_result=$execution_result+$?
 
-    semodule_package -o php-fpm.pp -m php-fpm.mod >/dev/null 2>>SELinux.log
+    semodule_package -o php-fpm.pp -m php-fpm.mod &>/dev/null 2>>SELinux.log
     execution_result=$execution_result+$?
 
-    semodule -i php-fpm.pp >/dev/null 2>>SELinux.log
+    semodule -i php-fpm.pp &>/dev/null 2>>SELinux.log
     execution_result=$execution_result+$?
 
-    semodule -l | grep php-fpm >/dev/null 2>>SELinux.log
+    semodule -l | grep php-fpm &>/dev/null 2>>SELinux.log
     execution_result=$execution_result+$?
 
-    rm -f php-fpm.* >/dev/null 2>>SELinux.log
+    rm -f php-fpm.* &>/dev/null 2>>SELinux.log
     execution_result=$execution_result+$?
     
      if [[ $execution_result -gt 0 ]]; then
@@ -571,22 +574,22 @@ function config_ssl() {
 
     local execution_result
 
-    openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 >/dev/null 2>openssl_dhparam.log
+    openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 &>/dev/null 2>openssl_dhparam.log
     declare -i execution_result=$?
 
-    mkdir -p /var/www/letsencrypt/.well-known/acme-challenge >/dev/null 2>ssl.log
+    mkdir -p /var/www/letsencrypt/.well-known/acme-challenge &>/dev/null 2>ssl.log
     execution_result=$execution_result+$?
 
     echo "30 2 * * * certbot renew --post-hook 'nginx -s reload' >> /var/log/letsencrypt/le-renew.log" >> cronfile 
     execution_result=$execution_result+$?
 
-    crontab cronfile >/dev/null 2>>ssl.log
+    crontab cronfile &>/dev/null 2>>ssl.log
     execution_result=$execution_result+$?
 
-    rm -f cronfile >/dev/null 2>>ssl.log
+    rm -f cronfile &>/dev/null 2>>ssl.log
     execution_result=$execution_result+$?
 
-    crontab -l | grep -P '^\d{1,2}.*certbot\srenew.*log$' >/dev/null 2>>ssl.log
+    crontab -l | grep -P '^\d{1,2}.*certbot\srenew.*log$' &>/dev/null 2>>ssl.log
     execution_result=$execution_result+$?
 
     nginx -s reload
@@ -606,19 +609,19 @@ function config_firewalld() {
 
     local execution_result
 
-    systemctl enable firewalld >/dev/null 2>firewalld.log
+    systemctl enable firewalld &>/dev/null 2>firewalld.log
     declare -i execution_result=$?
 
-    systemctl start firewalld>/dev/null 2>>firewalld.log
+    systemctl start firewalld &>/dev/null 2>>firewalld.log
     execution_result=$execution_result+$?
 
-    firewall-cmd --permanent --zone=public --add-service=http >/dev/null 2>>firewalld.log
+    firewall-cmd --permanent --zone=public --add-service=http &>/dev/null 2>>firewalld.log
     execution_result=$execution_result+$?
 
-    firewall-cmd --permanent --zone=public --add-service=https >/dev/null 2>>firewalld.log
+    firewall-cmd --permanent --zone=public --add-service=https &>/dev/null 2>>firewalld.log
     execution_result=$execution_result+$?
 
-    firewall-cmd --reload >/dev/null 2>>firewalld.log
+    firewall-cmd --reload &>/dev/null 2>>firewalld.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -712,13 +715,13 @@ function setting_symlinks() {
 
     local execution_result
 
-    mkdir -p /home/$username/www >/dev/null 2>symlinks.log
+    mkdir -p /home/$username/www &>/dev/null 2>symlinks.log
     declare -i execution_result=$?
 
-    ln -s /var/www/html /home/$username/www/sites >/dev/null 2>>symlinks.log
+    ln -s /var/www/html /home/$username/www/sites &>/dev/null 2>>symlinks.log
     execution_result=$execution_result+$?
 
-    ln -s /etc/nginx/conf.d /home/$username/www/conf.d >/dev/null 2>>symlinks.log
+    ln -s /etc/nginx/sites.conf.d /home/$username/www/sites.conf.d &>/dev/null 2>>symlinks.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -735,13 +738,13 @@ function setting_permissions() {
     
     local execution_result
 
-    setfacl -m u:$username:rwx /etc/nginx/conf.d >/dev/null 2>>permissions.log
+    setfacl -m u:$username:rwx /etc/nginx/conf.d &>/dev/null 2>>permissions.log
     declare -i execution_result=$?
 
-    setfacl -m u:$username:rwx /var/www/html >/dev/null 2>>permissions.log
+    setfacl -m u:$username:rwx /var/www/html &>/dev/null 2>>permissions.log
     execution_result=$execution_result+$?
 
-    setfacl -Rdm u:php-fpm:rwx /var/www/html >/dev/null 2>permissions.log
+    setfacl -Rdm u:php-fpm:rwx /var/www/html &>/dev/null 2>permissions.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -760,10 +763,10 @@ function setting_nginx() {
 
     local execution_result
 
-    cp /home/$username/LaraAutoVel/nginx/*.conf /etc/nginx/default.d/ >/dev/null 2>nginx_config.log
+    cp /home/$username/LaraAutoVel/nginx/*.conf /etc/nginx/default.d/ &>/dev/null 2>nginx_config.log
     declare -i execution_result=$?
 
-    cp /home/$username/LaraAutoVel/ssl/*.conf /etc/nginx/default.d/ >/dev/null 2>>nginx_config.log
+    cp /home/$username/LaraAutoVel/ssl/*.conf /etc/nginx/default.d/ &>/dev/null 2>>nginx_config.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -830,7 +833,7 @@ function test_site() {
     
     local execution_result
 
-    mkdir /home/$username/www/sites/test >/dev/null 2>test_site.log
+    mkdir /home/$username/www/sites/test &>/dev/null 2>test_site.log
     declare -i execution_result=$?
 
     echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php 2>>test_site.log
@@ -839,7 +842,7 @@ function test_site() {
     sed -e 's/443.*;$/80;/'  -e 's/${fqdn}/127.0.0.1/' -e 's/${appName}\/public/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/conf.d/test.conf 2>>test_site.log
     execution_result=$execution_result+$?
 
-    mv /etc/nginx/default.d/ssl-redirect.conf /etc/nginx/default.d/ssl-redirect.conf.tmp >/dev/null 2>>test_site.log
+    mv /etc/nginx/default.d/ssl-redirect.conf /etc/nginx/default.d/ssl-redirect.conf.tmp &>/dev/null 2>>test_site.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -855,10 +858,10 @@ function starting_services() {
 
     local execution_result
 
-    systemctl restart nginx >/dev/null 2>>starting_services.log
+    systemctl restart nginx &>/dev/null 2>>starting_services.log
     declare -i execution_result=$?
 
-    systemctl restart php-fpm >/dev/null 2>>starting_services.log
+    systemctl restart php-fpm &>/dev/null 2>>starting_services.log
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
