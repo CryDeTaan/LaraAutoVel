@@ -52,7 +52,7 @@ format_failed="\r\033[K\t%-20s${BALLOT_X}\n"
 function banner() {
     clear
     printf "
-    --------------------------------------------------------------------
+    * ---------------------------------------------------------------- *
     |${RED}      _                                   _    __      __  _     ${NC} |
     |${RED}     | |                       /\        | |   \ \    / / | |    ${NC} |
     |${RED}     | |     __ _ _ __ __ _   /  \  _   _| |_ __\ \  / /__| |    ${NC} |
@@ -60,7 +60,7 @@ function banner() {
     |${RED}     | |___| (_| | | | (_| |/ ____ \ |_| | || (_) \  /  __/ |    ${NC} |
     |${RED}     |______\__,_|_|  \__,_/_/    \_\__,_|\__\___/ \/ \___|_|    ${NC} |
     |                                           ${GREEN}v%s - @%s    ${NC}  | 
-    --------------------------------------------------------------------\n 
+    * ---------------------------------------------------------------- *\n 
     A few questions are required.\n\n" "$__version__" "$__author__"
 }
 
@@ -71,6 +71,8 @@ function runas(){
     # I have done a lot of work to make sure that the web server can run as normal user. So I decided to remove the ability to choose.
     # 1. No, it's not because it's more secure, it was just to much effort to make it possible for very little benefit.
     # 2. It's more secure ;p
+    # 
+    # I left the original commands intact, if someone wants to use it. 
 
     # Setting some local variables for this function.
     local runas_user password
@@ -119,6 +121,7 @@ export LANG=en_US.utf-8 && export LC_ALL=en_US.utf-8
 
 function check_ssh() {
 
+    # TODO:
     # I still want to do something here. Not sure what, but this needs to do something.
 
     local password_auth
@@ -226,7 +229,7 @@ function setting_repos() {
         repo_name=$1
         repo=$2
 
-        yum install -y -q $repo  &>/dev/null 2>$repo_name.log &
+        yum install -y -q $repo  &>/dev/null &
         repo_pid=$!
 
         load $repo_pid $repo_name
@@ -241,7 +244,7 @@ function setting_repos() {
     rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY
 
     # 3. yum update
-    yum update -y -q &>/dev/null 2>update.log &
+    yum update -y -q &>/dev/null &
     yum_pid=$!
 
     load $yum_pid yum-update
@@ -270,7 +273,7 @@ function install_components() {
     # Loop that will install each package.
     for component in "${components[@]}"
     do
-        yum install -y -q $component &>/dev/null 2>$component.log  &    
+        yum install -y -q $component &>/dev/null &    
         component_pid=$!
 
         load $component_pid $component
@@ -477,16 +480,16 @@ function starting_services() {
 
     local execution_result
 
-    systemctl enable nginx &>/dev/null 2>starting_services.log
+    systemctl enable nginx &>/dev/null 
     declare -i execution_result=$?
 
-    systemctl start nginx &>/dev/null 2>>starting_services.log
+    systemctl start nginx &>/dev/null
     execution_result=$execution_result+$?
 
-    systemctl enable php-fpm &>/dev/null 2>>starting_services.log
+    systemctl enable php-fpm &>/dev/null
     execution_result=$execution_result+$?
 
-    systemctl start php-fpm &>/dev/null 2>>starting_services.log
+    systemctl start php-fpm &>/dev/null
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -549,22 +552,22 @@ function config_selinux() {
     
     local execution_result
 
-    curl -s -O https://raw.githubusercontent.com/CryDeTaan/LaraAutoVel/master/SELiux/php-fpm.te &>/dev/null 2>SELinux.log
+    curl -s -O https://raw.githubusercontent.com/CryDeTaan/LaraAutoVel/master/SELiux/php-fpm.te &>/dev/null
     declare -i execution_result=$?
 
-    checkmodule -M -m -o php-fpm.mod php-fpm.te &>/dev/null 2>>SELinux.log
+    checkmodule -M -m -o php-fpm.mod php-fpm.te &>/dev/null
     execution_result=$execution_result+$?
 
-    semodule_package -o php-fpm.pp -m php-fpm.mod &>/dev/null 2>>SELinux.log
+    semodule_package -o php-fpm.pp -m php-fpm.mod &>/dev/null
     execution_result=$execution_result+$?
 
-    semodule -i php-fpm.pp &>/dev/null 2>>SELinux.log
+    semodule -i php-fpm.pp &>/dev/null
     execution_result=$execution_result+$?
 
-    semodule -l | grep php-fpm &>/dev/null 2>>SELinux.log
+    semodule -l | grep php-fpm &>/dev/null
     execution_result=$execution_result+$?
 
-    rm -f php-fpm.* &>/dev/null 2>>SELinux.log
+    rm -f php-fpm.* &>/dev/null
     execution_result=$execution_result+$?
     
      if [[ $execution_result -gt 0 ]]; then
@@ -581,22 +584,22 @@ function config_ssl() {
 
     local execution_result
 
-    openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 &>/dev/null 2>openssl_dhparam.log
+    openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096 &>/dev/null
     declare -i execution_result=$?
 
-    mkdir -p /var/www/letsencrypt/.well-known/acme-challenge &>/dev/null 2>ssl.log
+    mkdir -p /var/www/letsencrypt/.well-known/acme-challenge &>/dev/null
     execution_result=$execution_result+$?
 
     echo "30 2 * * * certbot renew --post-hook 'nginx -s reload' >> /var/log/letsencrypt/le-renew.log" >> cronfile 
     execution_result=$execution_result+$?
 
-    crontab cronfile &>/dev/null 2>>ssl.log
+    crontab cronfile &>/dev/null
     execution_result=$execution_result+$?
 
-    rm -f cronfile &>/dev/null 2>>ssl.log
+    rm -f cronfile &>/dev/null
     execution_result=$execution_result+$?
 
-    crontab -l | grep -P '^\d{1,2}.*certbot\srenew.*log$' &>/dev/null 2>>ssl.log
+    crontab -l | grep -P '^\d{1,2}.*certbot\srenew.*log$' &>/dev/null
     execution_result=$execution_result+$?
 
     nginx -s reload
@@ -616,19 +619,19 @@ function config_firewalld() {
 
     local execution_result
 
-    systemctl enable firewalld &>/dev/null 2>firewalld.log
+    systemctl enable firewalld &>/dev/null
     declare -i execution_result=$?
 
-    systemctl start firewalld &>/dev/null 2>>firewalld.log
+    systemctl start firewalld &>/dev/null
     execution_result=$execution_result+$?
 
-    firewall-cmd --permanent --zone=public --add-service=http &>/dev/null 2>>firewalld.log
+    firewall-cmd --permanent --zone=public --add-service=http &>/dev/null
     execution_result=$execution_result+$?
 
-    firewall-cmd --permanent --zone=public --add-service=https &>/dev/null 2>>firewalld.log
+    firewall-cmd --permanent --zone=public --add-service=https &>/dev/null
     execution_result=$execution_result+$?
 
-    firewall-cmd --reload &>/dev/null 2>>firewalld.log
+    firewall-cmd --reload &>/dev/null
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -699,7 +702,7 @@ function git_clone() {
     local execution_result
 
     # Cloning the LaraAutoVel repo. 
-    git clone -q https://github.com/CryDeTaan/LaraAutoVel.git /home/$username/LaraAutoVel/ 2>>git.log
+    git clone -q https://github.com/CryDeTaan/LaraAutoVel.git /home/$username/LaraAutoVel/
     declare -i execution_result=$?
 
 
@@ -722,16 +725,16 @@ function setting_symlinks() {
 
     local execution_result
 
-    mkdir -p /home/$username/www &>/dev/null 2>symlinks.log
+    mkdir -p /home/$username/www &>/dev/null
     declare -i execution_result=$?
 
-    ln -s /var/www/html /home/$username/www/sites &>/dev/null 2>>symlinks.log
+    ln -s /var/www/html /home/$username/www/sites &>/dev/null
     execution_result=$execution_result+$?
 
     mkdir /etc/nginx/sites.conf.d &>/dev/null
     execution_result=$execution_result+$?
 
-    ln -s /etc/nginx/sites.conf.d /home/$username/www/sites.conf.d &>/dev/null 2>>symlinks.log
+    ln -s /etc/nginx/sites.conf.d /home/$username/www/sites.conf.d &>/dev/null
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -748,13 +751,13 @@ function setting_permissions() {
     
     local execution_result
 
-    setfacl -m u:$username:rwx /etc/nginx/sites.conf.d &>/dev/null 2>>permissions.log
+    setfacl -m u:$username:rwx /etc/nginx/sites.conf.d &>/dev/null
     declare -i execution_result=$?
 
-    setfacl -m u:$username:rwx /var/www/html &>/dev/null 2>>permissions.log
+    setfacl -m u:$username:rwx /var/www/html &>/dev/null
     execution_result=$execution_result+$?
 
-    setfacl -Rdm u:php-fpm:rwx /var/www/html &>/dev/null 2>permissions.log
+    setfacl -Rdm u:php-fpm:rwx /var/www/html &>/dev/null
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -773,10 +776,10 @@ function setting_nginx() {
 
     local execution_result
 
-    cp /home/$username/LaraAutoVel/nginx/*.conf /etc/nginx/default.d/ &>/dev/null 2>nginx_config.log
+    cp /home/$username/LaraAutoVel/nginx/*.conf /etc/nginx/default.d/ &>/dev/null
     declare -i execution_result=$?
 
-    cp /home/$username/LaraAutoVel/ssl/*.conf /etc/nginx/default.d/ &>/dev/null 2>>nginx_config.log
+    cp /home/$username/LaraAutoVel/ssl/*.conf /etc/nginx/default.d/ &>/dev/null
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -843,16 +846,16 @@ function test_site() {
     
     local execution_result
 
-    mkdir /home/$username/www/sites/test &>/dev/null 2>test_site.log
+    mkdir /home/$username/www/sites/test &>/dev/null
     declare -i execution_result=$?
 
-    echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php 2>>test_site.log
+    echo '<?php phpinfo();' > /home/$username/www/sites/test/info.php
     execution_result=$execution_result+$?
 
-    sed -e 's/443.*;$/80;/'  -e 's/${fqdn}/127.0.0.1/' -e 's/${appName}\/public/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/sites.conf.d/test.conf 2>>test_site.log
+    sed -e 's/443.*;$/80;/'  -e 's/${fqdn}/127.0.0.1/' -e 's/${appName}\/public/test/' -e '/ssl_certificate/d' /home/$username/LaraAutoVel/nginx/conf.d.example > /home/$username/www/sites.conf.d/test.conf
     execution_result=$execution_result+$?
 
-    mv /etc/nginx/default.d/ssl-redirect.conf /etc/nginx/default.d/ssl-redirect.conf.tmp &>/dev/null 2>>test_site.log
+    mv /etc/nginx/default.d/ssl-redirect.conf /etc/nginx/default.d/ssl-redirect.conf.tmp &>/dev/null
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -868,10 +871,10 @@ function restarting_services() {
 
     local execution_result
 
-    systemctl restart nginx &>/dev/null 2>>starting_services.log
+    systemctl restart nginx &>/dev/null
     declare -i execution_result=$?
 
-    systemctl restart php-fpm &>/dev/null 2>>starting_services.log
+    systemctl restart php-fpm &>/dev/null
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -890,10 +893,10 @@ function testing() {
     
     local execution_result
 
-    curl -s http://127.0.0.1/info.php | grep -Po "PHP Version (\d.){2}\d" >testing_services.log 2>&1
+    curl -s http://127.0.0.1/info.php | grep -Po "PHP Version (\d.){2}\d"
     declare -i execution_result=$?
 
-    php -v | grep -Po "PHP (\d.){2}\d\s\(cli\)" >>testing_services.log 2>&1
+    php -v | grep -Po "PHP (\d.){2}\d\s\(cli\)"
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
@@ -911,13 +914,13 @@ function testing_cleanup() {
     
     local execution_result
 
-    rm -rf /home/$username/www/sites/test >testing_cleanup.log 2>&1
+    rm -rf /home/$username/www/sites/test
     declare -i execution_result=$?
 
-    rm -f /home/$username/www/conf.d/test.conf >>testing_cleanup.log 2>&1
+    rm -f /home/$username/www/conf.d/test.conf
     execution_result=$execution_result+$?
 
-    mv /etc/nginx/default.d/ssl-redirect.conf.tmp /etc/nginx/default.d/ssl-redirect.conf >>testing_cleanup.log 2>&1
+    mv /etc/nginx/default.d/ssl-redirect.conf.tmp /etc/nginx/default.d/ssl-redirect.conf
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
