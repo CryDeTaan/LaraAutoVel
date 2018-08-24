@@ -31,7 +31,7 @@ GREEN="\033[32m"
 YELLOW="\033[33m"
 NC="\033[0m"    # No colour
 
-# Formating
+# Formatting
 UL="\033[4m"    # Underline
 BLD="\033[1m"    # Bold
 CL="\033[K"     # Clear line
@@ -154,7 +154,7 @@ function load(){
 
     printf "${hide_cursor}"
 
-    # Once the PID is no longer detected, the loop will end and based on the result of the process the parent funtion will pass
+    # Once the PID is no longer detected, the loop will end and based on the result of the process the parent function will pass
     # the exit code to display the correct result based on that exit code. 
 
     while [[ $(ps a | awk '{print $1}' | grep $pid) ]]
@@ -175,7 +175,7 @@ function load(){
 function display_result() {
 
     # Receiving a exit code from the last process, could be installation of a component, or configuration, etc.
-    # Using this exit code to either display a checkmark for successfull or a ballot-x if the process failed.
+    # Using this exit code to either display a checkmark for successful or a ballot-x if the process failed.
 
     local pid pid_name
 
@@ -201,7 +201,7 @@ function display_result() {
 
 function setting_repos() {
 
-    # This is realy the first action required before any packages are installed. 
+    # This is really the first action required before any packages are installed. 
     
     # Three things happen:
     # 1. Adding repo keys, first time yum runs you need to verify the pgp keys that is used to sign the packages.
@@ -261,7 +261,7 @@ function install_components() {
     # The package is installed in the background, but passing the PID and the package name to the load() function.
     # The stdout from yum will be suppressed although the stderr will be sent to a log file. 
 
-    printf "\n 3. ${UL}Installing Components${CLF}\n"
+    printf "\n 3. ${UL}Install Components${CLF}\n"
 
     # All the packages in an array.
     local components
@@ -363,14 +363,14 @@ function config_components() {
 
     # This function will call all the other configuration functions.
         
-    printf "\n 4. ${UL}Configuring Component's defaults${CLF}\n"
+    printf "\n 4. ${UL}Configure Components${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
 
     local components
 
-    declare -a components=("php=config_php" "nginx=conf_nginx" "starting_services=starting_services")
+    declare -a components=("php=config_php" "nginx=conf_nginx" "starting-services=starting_services")
 
 
     # Loop that will install each package.
@@ -406,7 +406,7 @@ function config_components() {
 function config_php() {
 
     # PHP-FPM is required to allow the Webserver, in this case Nginx, to execute PHP code. Furthermore, PHP-FPM can handle multiple pools of child processes via a local TCP socket.
-    # However, Nginx expects a Unix domain socket, which we can map to a path on the filesystem. :) 
+    # However, Nginx expects a Unix domain socket, which we can map to a path on the file system. :) 
     
     # Sounds fancy and all, but all that is really needed are these two lines.
 
@@ -507,14 +507,14 @@ function applying_security() {
 
     # This function will call all the other configuration functions.
         
-    printf "\n 5. ${UL}Applying Security${CLF}\n"
+    printf "\n 5. ${UL}Apply Security${CLF}\n"
 
     # Keeping with the them of using the load() function.
-    # Let's loop over each of the functions while the component is being onfigured. 
+    # Let's loop over each of the functions while the component is being configured. 
 
     local components
 
-    declare -a components=("SELinux=config_selinux" "lets_encrypt=config_ssl" "firewalld=config_firewalld" )
+    declare -a components=("SELinux=config_selinux" "lets-encrypt=config_ssl" "firewalld=config_firewalld" )
 
 
     # Loop that will install each package.
@@ -650,7 +650,7 @@ function framework_components() {
     # This includes cloning the repository, setting the template config files, default configs, and 
     # the let's encrypt config files.
 
-    printf "\n 6. ${UL}Setting up the LaraAutoVel Framework${CLF}\n"
+    printf "\n 6. ${UL}Setup LaraAutoVel Framework${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -721,7 +721,7 @@ function git_clone() {
 
 function setting_symlinks() {
 
-    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+    # This function will create all the folders and the required symlinks, and permissions for the LaraAutoVel Framework.
 
     local execution_result
 
@@ -772,7 +772,7 @@ function setting_permissions() {
 
 function setting_nginx() {
 
-    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+    # This function will create all the folders and the required symlinks, and permissions for the LaraAutoVel Framework.
 
     local execution_result
 
@@ -805,8 +805,8 @@ function starting_and_testing() {
     local components
 
     declare -a components=(
-                            "test_site=test_site" 
-                            "restarting_services=restarting_services"
+                            "test-site=test_site" 
+                            "restart-services=restarting_services"
                             "testing=testing"
                             "cleanup=testing_cleanup"
                           )
@@ -842,7 +842,7 @@ function starting_and_testing() {
 
 function test_site() {
 
-    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+    # This function will create all the folders and the required symlinks, and permissions for the LaraAutoVel Framework.
     
     local execution_result
 
@@ -889,7 +889,7 @@ function restarting_services() {
 
 function testing() {
 
-    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+    # This function will create all the folders and the required symlinks, and permissions for the LaraAutoVel Framework.
     
     local execution_result
 
@@ -910,7 +910,7 @@ function testing() {
 
 function testing_cleanup() {
 
-    # This function will create all the folders and the requird symlinks, and permissions for the LaraAutoVel Framework.
+    # This function will create all the folders and the required symlinks, and permissions for the LaraAutoVel Framework.
     
     local execution_result
 
