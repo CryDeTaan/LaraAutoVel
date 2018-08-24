@@ -61,7 +61,7 @@ function banner() {
     |${RED}     |______\__,_|_|  \__,_/_/    \_\__,_|\__\___/ \/ \___|_|    ${NC} |
     |                                           ${GREEN}v%s - @%s    ${NC}  | 
     * ---------------------------------------------------------------- *\n 
-    A few questions are required.\n\n" "$__version__" "$__author__"
+    \n\n" "$__version__" "$__author__"
 }
 
 
