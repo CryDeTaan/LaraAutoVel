@@ -13,7 +13,7 @@
 # But at the time of writing this comment, I feel that I am going to end up handling errors myself.
 #set -e 
 
-__version__="0.1"
+__version__="1.0"
 __author__="CryDeTaan"
 
 # Set some variables that well help with formatting and colours in the output during execution. 
