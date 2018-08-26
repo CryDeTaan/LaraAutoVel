@@ -882,10 +882,10 @@ function testing() {
     
     local execution_result
 
-    curl -s http://127.0.0.1/info.php | grep -Po "PHP Version (\d.){2}\d"
+    curl -s http://127.0.0.1/info.php | grep -Po "PHP Version (\d.){2}\d" &>/dev/null
     declare -i execution_result=$?
 
-    php -v | grep -Po "PHP (\d.){2}\d\s\(cli\)"
+    php -v | grep -Po "PHP (\d.){2}\d\s\(cli\)" &>/dev/null
     execution_result=$execution_result+$?
 
      if [[ $execution_result -gt 0 ]]; then
