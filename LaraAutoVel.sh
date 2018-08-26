@@ -450,21 +450,10 @@ function conf_nginx() {
     grep '^\s*server.*www.sock;$' /etc/nginx/conf.d/php-fpm.conf &>/dev/null
     sed_result=$sed_result+$?
     
-    sed -i.bak '/server {/,$d' /etc/nginx/nginx.conf &>/dev/null
+    sed -i.bak '/^\s*location \/ {$/,+1d' /etc/nginx/nginx.conf
     sed_result=$sed_result+$?
 
-    cat >> /etc/nginx/nginx.conf << EOF
-    include /etc/nginx/sites.conf.d/*.conf;
-
-    server {
-        listen       80 default_server;
-        listen       443 default_server;
-        server_name  _;
-        return       444;
-    }
-
-}
-EOF
+    sed -i '/^\s*include.*conf.d\/.*conf;$/a \    include \/etc\/nginx\/sites.conf.d\/*.conf;' /etc/nginx/nginx.conf
     sed_result=$sed_result+$?
 
     if [[ $sed_result -gt 0 ]]; then
