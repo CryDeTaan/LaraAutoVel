@@ -109,7 +109,7 @@ function runas(){
 function db_user(){
 
     # Read the inputs from the user. Should MariaDB/MySQL be installed? If yes, capture the password.
-    printf " 2. ${UL}Should ${BLD}MariaDB/MySQL${CLF}${UL} be installed? (Y)es/(n)o:${CLF} "
+    printf "\n 2. ${UL}Should ${BLD}MariaDB/MySQL${CLF}${UL} be installed? (Y)es/(n)o:${CLF} "
     read install_db
 
     # If the input was to install MariaDB/MySQL, then ask for the MySQL root user's password. Else, move on.
