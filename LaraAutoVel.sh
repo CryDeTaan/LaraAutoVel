@@ -61,7 +61,7 @@ function banner() {
     |${RED}     |______\__,_|_|  \__,_/_/    \_\__,_|\__\___/ \/ \___|_|    ${NC} |
     |                                           ${GREEN}v%s - @%s    ${NC}  | 
     * ---------------------------------------------------------------- *\n 
-    \n\n" "$__version__" "$__author__"
+    \n" "$__version__" "$__author__"
 }
 
 
@@ -109,7 +109,7 @@ function runas(){
 function db_user(){
 
     # Read the inputs from the user. Should MariaDB/MySQL be installed? If yes, capture the password.
-    printf " 2. ${UL}Should ${BLD}MariaDB/MySQL${CLF}${UL} be installed? (Y)es/(n)o:${CLF} \n"
+    printf " 2. ${UL}Should ${BLD}MariaDB/MySQL${CLF}${UL} be installed? (Y)es/(n)o:${CLF} "
     read install_db
 
     # If the input was to install MariaDB/MySQL, then ask for the MySQL root user's password. Else, move on.
