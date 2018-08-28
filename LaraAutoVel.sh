@@ -13,7 +13,7 @@
 # But at the time of writing this comment, I feel that I am going to end up handling errors myself.
 #set -e 
 
-__version__="1.0"
+__version__="1.1"
 __author__="CryDeTaan"
 
 # Set some variables that well help with formatting and colours in the output during execution. 
@@ -61,7 +61,7 @@ function banner() {
     |${RED}     |______\__,_|_|  \__,_/_/    \_\__,_|\__\___/ \/ \___|_|    ${NC} |
     |                                           ${GREEN}v%s - @%s    ${NC}  | 
     * ---------------------------------------------------------------- *\n 
-    \n\n" "$__version__" "$__author__"
+    \n" "$__version__" "$__author__"
 }
 
 
@@ -106,6 +106,27 @@ function runas(){
 
 }
 
+function db_user(){
+
+    # Read the inputs from the user. Should MariaDB/MySQL be installed? If yes, capture the password.
+    printf "\n 2. ${UL}Should ${BLD}MariaDB/MySQL${CLF}${UL} be installed? (Y)es/(n)o:${CLF} "
+    read install_db
+
+    # If the input was to install MariaDB/MySQL, then ask for the MySQL root user's password. Else, move on.
+    if [[ "$install_db" =~ ^(y|Y)[a-z]{0,2}$ ]] || [[ ! $install_db  ]] ;then
+        
+        printf "${SPACE}Please provide root password for the database: "
+        read -s db_root_password
+        echo
+
+    elif [[ "$install_db" =~ ^(n|N)[a-z]{0,1}$ ]]; then
+        printf "${RED}${SPACE}MariaDB/MySQL will not be installed!${NC}\n"
+    else
+        printf "${RED}${SPACE}Invalid option, please try again${NC}\n"
+        db_user
+    fi
+
+}
 
 function set_locales() {
 
@@ -210,7 +231,7 @@ function setting_repos() {
 
     local repo_pid
 
-    printf "\n 2. ${UL}Setting Repos${CLF}\n"
+    printf "\n 3. ${UL}Setting Repos${CLF}\n"
    
 
     declare -a repos=(  "epel-release=epel-release"
@@ -261,13 +282,13 @@ function install_components() {
     # The package is installed in the background, but passing the PID and the package name to the load() function.
     # The stdout from yum will be suppressed although the stderr will be sent to a log file. 
 
-    printf "\n 3. ${UL}Install Components${CLF}\n"
+    printf "\n 4. ${UL}Install Components${CLF}\n"
 
     # All the packages in an array.
     local components
     declare -a components=( "zsh" "vim" "git" "curl" "unzip" "certbot" "php72u"
                        "php72u-cli" "php72u-fpm-nginx" "php72u-json"
-                       "php72u-mbstring" "php72u-xml" "firewalld" 
+                       "php72u-mbstring" "php72u-xml" "mariadb-server" "firewalld" 
                      )
     
     # Loop that will install each package.
@@ -363,14 +384,14 @@ function config_components() {
 
     # This function will call all the other configuration functions.
         
-    printf "\n 4. ${UL}Configure Components${CLF}\n"
+    printf "\n 5. ${UL}Configure Components${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
 
     local components
 
-    declare -a components=("php=config_php" "nginx=conf_nginx" "starting-services=starting_services")
+    declare -a components=("php=config_php" "nginx=conf_nginx" "mariadb=conf_mariadb" "starting-services=starting_services")
 
 
     # Loop that will install each package.
@@ -465,6 +486,39 @@ function conf_nginx() {
     return 0
 }
 
+function conf_mariadb() {
+
+    local exec_result
+
+    systemctl enable mariadb &>/dev/null 
+    declare -i exec_result=$?
+
+    systemctl start mariadb &>/dev/null
+    exec_result=$exec_result+$?
+
+    sleep 2
+    
+    mysql -u root &>/dev/null <<-EOF
+UPDATE mysql.user SET Password=PASSWORD('$db_root_password') WHERE User='root';
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+DELETE FROM mysql.user WHERE User='';
+DELETE FROM mysql.db WHERE Db='test' OR Db='test_%';
+FLUSH PRIVILEGES;
+EOF
+    exec_result=$exec_result+$?
+
+    mysqladmin --user=root --password=$db_root_password version | grep -P "^Server.*(\d{1,2}.){2}\d{0,2}-MariaDB$" &>/dev/null 
+    exec_result=$exec_result+$?
+
+    if [[ $exec_result -gt 0 ]]; then
+        # TODO: Some logging required
+        # TODO: Add the ability to restore the back up of the config file.
+        return 1
+    fi
+
+    return 0
+}
+
 function starting_services() {
 
     local execution_result
@@ -496,7 +550,7 @@ function applying_security() {
 
     # This function will call all the other configuration functions.
         
-    printf "\n 5. ${UL}Apply Security${CLF}\n"
+    printf "\n 6. ${UL}Apply Security${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -639,7 +693,7 @@ function framework_components() {
     # This includes cloning the repository, setting the template config files, default configs, and 
     # the let's encrypt config files.
 
-    printf "\n 6. ${UL}Setup LaraAutoVel Framework${CLF}\n"
+    printf "\n 7. ${UL}Setup LaraAutoVel Framework${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -786,7 +840,7 @@ function starting_and_testing() {
     # This includes cloning the repository, setting the template config files, default configs, and 
     # the let's encrypt config files.
 
-    printf "\n 7. ${UL}Testing services${CLF}\n"
+    printf "\n 8. ${UL}Testing services${CLF}\n"
 
     # Keeping with the them of using the load() function.
     # Let's loop over each of the functions while the component is being configured. 
@@ -906,7 +960,7 @@ function testing_cleanup() {
     rm -rf /home/$username/www/sites/test
     declare -i execution_result=$?
 
-    rm -f /home/$username/www/conf.d/test.conf
+    rm -f /home/$username/www/sites.conf.d/test.conf
     execution_result=$execution_result+$?
 
     mv /etc/nginx/default.d/ssl-redirect.conf.tmp /etc/nginx/default.d/ssl-redirect.conf
@@ -925,6 +979,7 @@ clear
 banner
 set_locales
 runas
+db_user
 setting_repos
 install_components
 config_components

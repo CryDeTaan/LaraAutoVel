@@ -12,7 +12,7 @@
 |     | |    / _` | '__/ _` | / /\ \| | | | __/ _ \ \/ / _ \ |     |
 |     | |___| (_| | | | (_| |/ ____ \ |_| | || (_) \  /  __/ |     |
 |     |______\__,_|_|  \__,_/_/    \_\__,_|\__\___/ \/ \___|_|     |
-|                                           v1.0 - @CryDeTaan      |
+|                                           v1.1 - @CryDeTaan      |
 * ---------------------------------------------------------------- *
 ```
 ---
@@ -24,13 +24,14 @@ I started this project because each time I have to spin up a new web app I have 
 how I did it, and what worked and what didn't work for me. I do not spin up web apps often, but when I do, 
 I want to do it quickly.
 
-At first, I did it manually, but also consistently (I'll put up a blog post at some point with more detail about 
-each area that forms part of each of my installs), but I wanted to automate it further and not copy and paste my commands
+At first, I did it manually, but also consistently ([Consistent CentOS Framework for running Laravel web apps](https://medium.com/@crydetaan/consistent-centos-framework-for-running-laravel-web-apps-1eac1221f68e)), 
+but I wanted to automate it further and not copy and paste my commands
 from a note I created.
 
 LaraAutoVel will sort out the following for you:
 - php
 - nginx web server configs
+- MariaDB/MySQL
 - supporting components such as composer
 - testing
 - security (let's encrypt certs, HTTP headers, SELinux, and correct permissions for normal user)
@@ -71,12 +72,14 @@ LaraAutoVel will install and configure the following components:
 	php72u-json         ✔
 	php72u-mbstring     ✔
 	php72u-xml          ✔
+	mariadb-server      ✔
 	firewalld           ✔
 	composer            ✔
 
  3. Configure Components
 	php                 ✔
 	nginx               ✔
+	mariadb             ✔
 	start-services      ✔
 
  4. Apply Security
@@ -103,7 +106,7 @@ This setup is repeatable and will consistently give you a workable server with s
 
 Here is what it looks like in action.
 
-[![asciicast](https://asciinema.org/a/vHeYxULJbgZMf1OZOLKEiqIjZ.png)](https://asciinema.org/a/vHeYxULJbgZMf1OZOLKEiqIjZ?speed=2&theme=tango&autoplay=1)
+[![asciicast](https://asciinema.org/a/IfKDREcX6hiKTrhETUlJMTJA4.png)](https://asciinema.org/a/IfKDREcX6hiKTrhETUlJMTJA4?speed=2&theme=tango&autoplay=1)
 
 
 ## Adding a new Laravel Web App.
@@ -245,7 +248,7 @@ I used Digital Ocean's CentOS image during testing. So I know it works on their 
 Some of the feature I still want to add.
 
 - Logging
-- MySQL/MariaDB support
+- ~~MySQL/MariaDB support~~
 - Automated adding of Laravel Web Apps
 - Aesthetic/Visual changes
 - Commenting in the code
