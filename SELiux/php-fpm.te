@@ -2,8 +2,8 @@ module php-fpm 1.0;
 require {
   type httpd_t;
   type httpd_sys_content_t;
-  class file { create write };
   class dir { add_name write };
+  class file { create write append };
   }
         
 #============= httpd_t ==============
@@ -12,4 +12,4 @@ require {
 allow httpd_t httpd_sys_content_t:dir { add_name write };
     
 #!!!! This avc can be allowed using the boolean 'httpd_unified'
-allow httpd_t httpd_sys_content_t:file { create write };
+allow httpd_t httpd_sys_content_t:file { create write append };
